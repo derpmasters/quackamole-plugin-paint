@@ -15,6 +15,7 @@ btnSendRandom.addEventListener('click', () => {
 
 // receive messages from parent ===> iframe
 window.addEventListener('message', (event) => {
+    console.log('plugin received message', event);
     if (event.origin === 'localhost:3000') {
         output.innerText = event.data;
         console.log('message received', event);
