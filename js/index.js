@@ -8,9 +8,13 @@ const getRandomNumber = () => {
 // send message from iframe ===> parent
 btnSendRandom.addEventListener('click', () => {
    console.log('sending random number');
-   const randomNumber = '' + getRandomNumber();
-    output.innerText = randomNumber;
-    window.top.postMessage(randomNumber, '*');
+   const randomNumber = getRandomNumber();
+   const data = {
+       type: 'broadcast',
+       payload: {randomNumber}
+   };
+    output.innerText = '' + randomNumber;
+    window.top.postMessage(data, '*');
 });
 
 // receive messages from parent ===> iframe
