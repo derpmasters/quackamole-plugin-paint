@@ -21,7 +21,10 @@ btnSendRandom.addEventListener('click', () => {
 window.addEventListener('message', (event) => {
     console.log('plugin received message', event);
     if (event.origin === 'localhost:3000') {
-        output.innerText = event.data;
-        console.log('message received', event);
+        if (event.data.type === 'pluginData') {
+            output.innerText = '' + event.payload.randomNumber;
+            console.log('random number received', event);
+
+        }
     }
 });
