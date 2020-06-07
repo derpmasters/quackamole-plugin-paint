@@ -12,5 +12,5 @@ btnSendRandom.addEventListener('click', () => {
 });
 
 quackamole.eventManager.on('RANDOM_NUMBER', ({randomNumber}) => {
-    output.innerText = '' + payload.randomNumber;
+    output.innerText = '' + randomNumber;
 });
