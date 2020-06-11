@@ -11,10 +11,12 @@ body {
     align-items: center;
     width: 100vw;
     height: 100vh;
+    background-color: white;
 }
 
 canvas {
-    border: 1px solid black;
+    border-bottom: 1px solid #aaa;
+    overflow: hidden;
     position: absolute;
     top: 0;
     left: 0;

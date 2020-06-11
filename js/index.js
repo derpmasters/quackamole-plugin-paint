@@ -31,7 +31,7 @@ const sendData = (drawnLines, color, lineWidth) => {
 
 quackamole.eventManager.on('DRAW_DATA', ({drawnLines, color, lineWidth}) => {
     console.log('on DRAW_DATA received', drawnLines);
-    drawFromRecording(drawnLines, color, lineWidth);
+    drawFromRecording(drawnLines, lineWidth, color);
 });
 
 const handleDraw = (evt) => {
@@ -57,12 +57,12 @@ const handleDraw = (evt) => {
     lastXY = currentXY;
 };
 
-const drawFromRecording = (recordedPathCoords) => {
+const drawFromRecording = (recordedPathCoords, lineWidth, color) => {
     for (let i = 1; i < recordedPathCoords.length; i++) {
         const lastXY = recordedPathCoords[i-1];
         const currentXY = recordedPathCoords[i];
 
-        CanvasUtils.drawLine(ctx, lastXY, currentXY, 5, 'red');
+        CanvasUtils.drawLine(ctx, lastXY, currentXY, lineWidth, color);
     }
 }
 
