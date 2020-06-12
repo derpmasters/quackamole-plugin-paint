@@ -15,8 +15,8 @@ let currentDrawState = DRAW_STATES.NOT_DRAWING;
 let lastXY = null;
 
 let recordedPathCoords = [];
-let availableColors = ['white', 'red', 'green', 'black', 'yellow'];
-let currentColor = availableColors[0];
+let availableColors = ['white', 'black', '#4D9221', '#D92405', '#3563EB', '#EAC124'];
+let currentColor = availableColors[2];
 
 const drawFromRecording = ({drawnLines, lineWidth, color}) => {
     for (let i = 1; i < drawnLines.length; i++) {
