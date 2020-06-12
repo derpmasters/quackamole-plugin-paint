@@ -67,8 +67,10 @@ class CanvasUtils {
         const bounds = ctx.canvas.getBoundingClientRect();
 
         // get the mouse coordinates, subtract the canvas top left and any scrolling
-        let x = evt.pageX - bounds.left - scrollX;
-        let y = evt.pageY - bounds.top - scrollY;
+        const pageX = evt.type.includes('touch') ? evt.touches[0].pageX : evt.pageX;
+        const pageY = evt.type.includes('touch') ? evt.touches[0].pageY : evt.pageY;
+        let x = pageX - bounds.left - scrollX;
+        let y = pageY - bounds.top - scrollY;
 
         // first normalize the mouse coordinates from 0 to 1 (0,0) top left
         // off canvas and (1,1) bottom right by dividing by the bounds width and height

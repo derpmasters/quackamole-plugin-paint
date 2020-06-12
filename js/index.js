@@ -1,79 +1,94 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const quackamole = new Quackamole();
-
-let lastXY = null;
-let lastLineWidth = null;
-let recordedPathCoords = [];
-let availableColors = ['red', 'green', 'black', 'yellow'];
-let currentColor = availableColors[0];
-
 const colorPalette = document.getElementById('palette');
 const lineWidthInput = document.getElementById('line-width-input');
-availableColors.forEach((color, i) => {
-   const button = document.createElement('button');
-   button.classList.add('btn', 'btn-color');
-   button.style.backgroundColor = availableColors[i];
-   button.onclick = () => currentColor = availableColors[i];
-   colorPalette.appendChild(button);
-});
 
-const resizeCanvas = () => {
-    canvas.width = window.innerWidth * 0.95;
-    canvas.height = window.innerHeight * 0.95;
+let DRAW_STATES = {
+    NOT_DRAWING: 'not-drawing',
+    STARTING: 'starting',
+    DRAWING: 'drawing',
+    STOPPING: 'stopping'
 };
 
-resizeCanvas();
+let currentDrawState = DRAW_STATES.NOT_DRAWING;
+let lastXY = null;
 
-const sendData = (drawnLines, color, lineWidth) => {
-    quackamole.broadcastData('DRAW_DATA', {drawnLines, color, lineWidth});
-};
+let recordedPathCoords = [];
+let availableColors = ['white', 'red', 'green', 'black', 'yellow'];
+let currentColor = availableColors[0];
 
-quackamole.eventManager.on('DRAW_DATA', ({drawnLines, color, lineWidth}) => {
-    console.log('on DRAW_DATA received', drawnLines);
-    drawFromRecording(drawnLines, lineWidth, color);
-});
-
-const handleDraw = (evt) => {
-    // TODO make generic enough to reuse with received peer data. Wrap handler logic in separate fn
-    const currentXY = CanvasUtils.getScaledMousePosition(ctx, evt);
-    lastXY = lastXY || currentXY;
-
-    // reduce line width the quicker pointing device is moved
-    const distance = VectorUtils.distance(lastXY, currentXY);
-    const falloff = Math.max(Math.min((distance / -100) + 1, 1), 0.1);
-    let currentLineWidth = lineWidthInput.value * falloff;
-
-    // prevent sudden line width differences
-    if (lastLineWidth) {
-        const min = lastLineWidth * 0.95;
-        const max = lastLineWidth * 1.05;
-        currentLineWidth = Math.max(Math.min(currentLineWidth, max), min);
-    }
-
-    // CanvasUtils.drawLine(ctx, lastXY, currentXY, currentLineWidth, currentColor);
-    recordedPathCoords.push(currentXY);
-    lastLineWidth = currentLineWidth;
-    lastXY = currentXY;
-};
-
-const drawFromRecording = (recordedPathCoords, lineWidth, color) => {
-    for (let i = 1; i < recordedPathCoords.length; i++) {
-        const lastXY = recordedPathCoords[i-1];
-        const currentXY = recordedPathCoords[i];
-
+const drawFromRecording = ({drawnLines, lineWidth, color}) => {
+    for (let i = 1; i < drawnLines.length; i++) {
+        const lastXY = drawnLines[i - 1];
+        const currentXY = drawnLines[i];
         CanvasUtils.drawLine(ctx, lastXY, currentXY, lineWidth, color);
     }
 }
 
-canvas.addEventListener('mousedown', (evt) => {
-    canvas.addEventListener('mousemove', handleDraw);
-})
+//////////////////////////
+// QUACKAMOLE SDK STUFF //
+//////////////////////////
+const sendData = (drawnLines, color, lineWidth) => {
+    quackamole.broadcastData('DRAW_DATA', {drawnLines, color, lineWidth});
+};
 
-canvas.addEventListener('mouseup', (evt) => {
-    canvas.removeEventListener('mousemove', handleDraw);
-    sendData(recordedPathCoords, currentColor, lineWidthInput.value);
-    lastLineWidth = null;
-    recordedPathCoords = [];
-    lastXY = null;
-})
+quackamole.eventManager.on('DRAW_DATA', (recording) => {
+    drawFromRecording(recording);
+});
+
+
+////////////////////////
+// DOM EVENT HANDLERS //
+////////////////////////
+const handleStartDraw = (evt) => {
+    currentDrawState = DRAW_STATES.STARTING;
+};
+
+const handleDraw = (evt) => {
+    if (currentDrawState === DRAW_STATES.NOT_DRAWING) return;
+    const currentXY = CanvasUtils.getScaledMousePosition(ctx, evt);
+    console.log('XY', currentXY);
+    recordedPathCoords.push(currentXY);
+    if (recordedPathCoords.length > 4) {
+        const recording = lastXY ? [lastXY, ...recordedPathCoords] : recordedPathCoords;
+        sendData(recording, currentColor, lineWidthInput.value);
+
+        if (currentDrawState === DRAW_STATES.DRAWING) {
+            lastXY = recordedPathCoords[recordedPathCoords.length - 1];
+        }
+        recordedPathCoords = [];
+    }
+    currentDrawState = DRAW_STATES.DRAWING;
+};
+
+const handleStopDraw = evt => {
+    if (currentDrawState !== DRAW_STATES.NOT_DRAWING) {
+        currentDrawState = DRAW_STATES.NOT_DRAWING;
+        sendData(recordedPathCoords, currentColor, lineWidthInput.value);
+        recordedPathCoords = [];
+        lastXY = null;
+    }
+};
+
+canvas.addEventListener('mousedown', handleStartDraw);
+canvas.addEventListener('mousemove', handleDraw);
+canvas.addEventListener('mouseup', handleStopDraw);
+
+canvas.addEventListener('touchstart', handleStartDraw);
+canvas.addEventListener('touchmove', handleDraw);
+canvas.addEventListener('touchend', handleStopDraw);
+
+//////////////////////
+// INITIALIZE STUFF //
+//////////////////////
+canvas.width = window.innerWidth * 0.95;
+canvas.height = window.innerHeight * 0.95;
+
+availableColors.forEach((color, i) => {
+    const button = document.createElement('button');
+    button.classList.add('btn', 'btn-color');
+    button.style.backgroundColor = availableColors[i];
+    button.onclick = () => currentColor = availableColors[i];
+    colorPalette.appendChild(button);
+});
