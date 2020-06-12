@@ -12,8 +12,8 @@ body {
     width: 100vw;
     height: 100vh;
     background-color: white;
-    /* Disables pull-to-refresh but allows overscroll glow effects. */
-    overscroll-behavior-y: contain;
+    /* prevent pull to refresh on mobile */
+    overscroll-behavior-y: none;
 }
 
 canvas {
